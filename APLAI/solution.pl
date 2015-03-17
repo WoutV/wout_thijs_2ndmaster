@@ -1,16 +1,77 @@
 :- lib(ic).
+:- lib(lists).
 
-solve(Puzzle):- rowConstraint(Puzzle),
+/*
+solve(Puzzle):-
+    T = Puzzle,
+    solve(Puzzle,naive),
+    solve(T,first_fail),
+    solve(Puzzle,middle_out),
+    solve(Puzzle,moff),
+    solve(Puzzle,moffmo).
+*/
+
+solve(P,Search):- 
+                transpose(P,Puzzle),
+                rowConstraint(Puzzle),
                 columnConstraint(Puzzle),
                 blockConstraint(Puzzle),
-                write(Puzzle).
+                createOneList(Puzzle,R),
+                search(Search,R,B),
+                pretty_print(Puzzle,B,Search).
                 
+createOneList(L,R):-createOneList(L,[],R).
+createOneList([],Acc,Acc).
+createOneList([H|T],Acc,List):-
+    append(Acc,H,R1),
+    createOneList(T,R1,List).
+    
 rowConstraint(Puzzle):-
     (foreach(Row,Puzzle)
      do
         Row::1..9,
         alldifferent(Row) 
     ).
+    
+/* Pretty Print L */
+
+pretty_print(List,B,Search) :-
+    (foreach(Row,List)
+    do 
+        write(Row),nl
+	),
+    write(search - Search),nl,    
+    write(backtracks-B),nl,
+    write(-----------------------),nl.
+    
+/* SEARCH */
+search(naive,List,B) :-
+    search(List,0,input_order,indomain,complete,[backtrack(B)]).
+    
+search(middle_out,List,B) :-
+    middle_out(List,MOList),
+    search(MOList,0,input_order,indomain,complete, [backtrack(B)]).
+    
+search(first_fail,List,B) :-
+    search(List,0,first_fail,indomain,complete, [backtrack(B)]).
+    
+search(moff,List,B) :-
+    middle_out(List,MOList),
+    search(MOList,0,first_fail,indomain,complete, [backtrack(B)]).
+    
+search(moffmo,List,B) :-
+    middle_out(List,MOList),
+    search(MOList,0,first_fail,
+    indomain_middle,complete, [backtrack(B)]).    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
 columnConstraint(Puzzle):-
      transpose(Puzzle, Columns),
