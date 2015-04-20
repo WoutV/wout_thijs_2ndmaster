@@ -3,21 +3,81 @@
 
 battleshits(Hints, Rows, Columns,Solution):-
     initialize_boats(Hints,Solution),
+	List is Solution[1..10,1..10],
+	createOneList(List,OneList),
+	search(OneList,0,input_order,indomain,complete,[backtrack(B)]),
     check_rows(Rows,Solution),
     check_columns(Columns,Solution),
-    check_boats(Solution).
+	check_boats(Solution).	
     %pretty_print(Solution).
     
  check_boats(Solution):-
-    check_submarines(Solution).
+    	check_submarines(Solution),
+	check_topandbottom(Solution),
+	check_leftandright(Solution).
+%	check_middlepieces(Solution)
+	
     
  check_submarines(Solution):-
-    (foreachelem(Elem,Solution),
-    fromto(0,In,Out,Sum)
-    do (
-       Element#=6 -> Out is In + 1
-       ),
-    Sum#=4).
+    (foreachelem(Elem,Solution),fromto(0,In,Out,Sum)
+		do
+		  (Elem==6 -> 
+			Out is In + 1
+			; 
+			Out is In
+		   )
+		),
+    Sum#=4.
+
+
+ check_middlepieces(Solution):-
+     (foreachelem(Elem,Solution),fromto(0,In,Out,Sum)
+		do
+		  (Elem==2 -> 
+			Out is In + 1
+			; 
+			Out is In
+		   )
+		),
+    Sum#=4.
+
+check_topandbottom(Solution):-
+	(foreachelem(Elem,Solution),fromto(0,In,Out,Sum1)
+		do
+		  (Elem==4 -> 
+			Out is In + 1
+			; 
+			Out is In
+		   )
+		),
+    (foreachelem(Elem,Solution),fromto(0,In,Out,Sum1)
+		do
+		  (Elem==5 -> 
+			Out is In + 1
+			; 
+			Out is In
+		   )
+		),
+	Sum1==Sum2.
+
+check_leftandright(Solution):-
+	(foreachelem(Elem,Solution),fromto(0,In,Out,Sum1)
+		do
+		  (Elem==1 -> 
+			Out is In + 1
+			; 
+			Out is In
+		   )
+		),
+    (foreachelem(Elem,Solution),fromto(0,In,Out,Sum1)
+		do
+		  (Elem==3 -> 
+			Out is In + 1
+			; 
+			Out is In
+		   )
+		),
+	Sum1==Sum2.
     
 check_columns([],[]).
 check_columns(Columns,Solution):-
@@ -59,7 +119,7 @@ check_row(Tally,SolutionRow):-
     (foreach(Element,SolutionRow),
     fromto(0,In,Out,Sum)
     do (
-       Element#>0 -> Out is In + 1
+       Element>0 -> Out is In + 1
        ),
     Sum#=Tally).
     
@@ -77,9 +137,12 @@ set_hint((Row,Column,Boat),Solution):-
     to_string(Int,Boat),
     subscript(Solution,[Row,Column],Int).
 
-
-
-
+%Takes a list of lists and returns the concatenation of the lists into one list.                
+createOneList(L,R):-createOneList(L,[],R).
+createOneList([],Acc,Acc).
+createOneList([H|T],Acc,List):-
+    append(Acc,H,R1),
+    createOneList(T,R1,List).
 
 
 to_string(0,".").
