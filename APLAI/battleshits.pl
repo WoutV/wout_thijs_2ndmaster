@@ -3,81 +3,49 @@
 
 battleshits(Hints, Rows, Columns,Solution):-
     initialize_boats(Hints,Solution),
+	sumList(Rows,Boats),
+	Water is (100-Boats),
 	List is Solution[1..10,1..10],
 	createOneList(List,OneList),
-	search(OneList,0,input_order,indomain,complete,[backtrack(B)]),
+	check_water(OneList,Water),
+	check_boats(Solution),
     check_rows(Rows,Solution),
     check_columns(Columns,Solution),
-	check_boats(Solution).	
-    %pretty_print(Solution).
-    
- check_boats(Solution):-
-    	check_submarines(Solution),
-	check_topandbottom(Solution),
-	check_leftandright(Solution).
-%	check_middlepieces(Solution)
+	search(OneList,0,input_order,indomain,complete,[backtrack(B)]),
+    pretty_print(Solution).
 	
+pretty_print(Solution):-
+	(for(N,1,10),
+    param(Solution)
+    do
+        Row is Solution[N,1..10],
+        writeRow(Row),nl
+    ).
+	
+writeRow(List):-
+(for(N,1,10),
+	param(List)
+	do
+		get_element(Row,N,Elem),
+		write(Elem)
+).
+	
+check_water(List,Amount):-
+	count(0,List,Amount).
     
+check_boats(Solution):-
+	List is Solution[1..10,1..10],
+	createOneList(List,OneList),
+    check_submarines(OneList),
+	check_middlepieces(OneList).
+
  check_submarines(Solution):-
-    (foreachelem(Elem,Solution),fromto(0,In,Out,Sum)
-		do
-		  (Elem==6 -> 
-			Out is In + 1
-			; 
-			Out is In
-		   )
-		),
-    Sum#=4.
+    count(6,Solution,4).
 
 
  check_middlepieces(Solution):-
-     (foreachelem(Elem,Solution),fromto(0,In,Out,Sum)
-		do
-		  (Elem==2 -> 
-			Out is In + 1
-			; 
-			Out is In
-		   )
-		),
-    Sum#=4.
+     count(4,Solution,4).
 
-check_topandbottom(Solution):-
-	(foreachelem(Elem,Solution),fromto(0,In,Out,Sum1)
-		do
-		  (Elem==4 -> 
-			Out is In + 1
-			; 
-			Out is In
-		   )
-		),
-    (foreachelem(Elem,Solution),fromto(0,In,Out,Sum1)
-		do
-		  (Elem==5 -> 
-			Out is In + 1
-			; 
-			Out is In
-		   )
-		),
-	Sum1==Sum2.
-
-check_leftandright(Solution):-
-	(foreachelem(Elem,Solution),fromto(0,In,Out,Sum1)
-		do
-		  (Elem==1 -> 
-			Out is In + 1
-			; 
-			Out is In
-		   )
-		),
-    (foreachelem(Elem,Solution),fromto(0,In,Out,Sum1)
-		do
-		  (Elem==3 -> 
-			Out is In + 1
-			; 
-			Out is In
-		   )
-		),
-	Sum1==Sum2.
     
 check_columns([],[]).
 check_columns(Columns,Solution):-
@@ -112,16 +80,10 @@ get_element(N,[Elem|Others],Current,Result):-
     ;
         get_element(N,Others,Next,Result)
     ).
-        
-        
-        
+	
 check_row(Tally,SolutionRow):-
-    (foreach(Element,SolutionRow),
-    fromto(0,In,Out,Sum)
-    do (
-       Element>0 -> Out is In + 1
-       ),
-    Sum#=Tally).
+	N is (10-Tally),
+	count(0,SolutionRow,N).
     
 initialize_boats(Hints, Solution):-
     dim(Solution,[10,10]),
@@ -143,6 +105,15 @@ createOneList([],Acc,Acc).
 createOneList([H|T],Acc,List):-
     append(Acc,H,R1),
     createOneList(T,R1,List).
+	
+	
+count(X,[],0).
+count(X,[H|T],N):- count(X,T,N1), #=(X,H,B), N#=B+N1.
+
+sumList([], 0).
+sumList([H|T], Sum) :-
+   sum(T, Rest),
+   Sum is H + Rest.
 
 
 to_string(0,".").
