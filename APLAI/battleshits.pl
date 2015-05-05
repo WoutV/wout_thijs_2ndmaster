@@ -8,11 +8,13 @@ battleshits(Hints, Rows, Columns,Solution):-
 	Water is (100-Boats),
 	List is Solution[1..10,1..10],
 	createOneList(List,OneList),
-	check_water(OneList,Water),
-	check_boats(Solution),
+	%% check_water(OneList,Water),
     check_rows(Rows,Solution),
     check_columns(Columns,Solution),
+	check_boats(Solution),
     write('searching'),nl,
+    %% middle_out(OneList,MOList),
+    %% search(MOList,0,input_order,indomain,complete, [backtrack(B)]),
 	search(OneList,0,input_order,indomain,complete,[backtrack(B)]),
     pretty_print(Solution, Rows, Columns,B).
 	
@@ -46,58 +48,88 @@ check_water(List,Amount):-
 check_boats(Solution):-
 	List is Solution[1..10,1..10],
 	createOneList(List,OneList),
-	%% check_length2(Solution, 3),
-	%% check_length3(Solution,2),
-	check_length4(Solution,1),
- %%    check_submarines(OneList),
-    no_touching(Solution).
+	transpose(List,Trans),
+	createOneList(Trans,OneList2),
+	%% check_length4(OneList,OneList2,1),
+    check_submarines(OneList),
+	%% check_length2(OneList,OneList2, 3),
+	%% check_length3(OneList,OneList2,2),
+    no_touching(Solution),
+    no_verticalTouching(Solution).
 
 
-no_touching(Solution):-
-	for(N,1,10),
+no_verticalTouching(Solution):-
+	(for(N,1,10),
 	param(Solution)
     do
+    	write('column'),write(N),nl,
+    	Col is Solution[1..10,N],
+    	%% write(Col),nl,
+    	check_col_touching(Col)
+    ).
+
+no_touching(Solution):-
+	(for(N,1,10),
+	param(Solution)
+    do
+    	write('row'),write(N),nl,
     	Row is Solution[N,1..10],
-    	write('roooow'),nl,
-    	check_row_touching(Row),
-    	(N>1 ->
-    		(Above is N-1,
-    		RowAbove is Solution[Above,1..10],
-    		write('above'),nl,
-    		check_above(Row,RowAbove)
-    		)
-    		;
-    		true
-    	)
-    	%% ),
-		%% (N=\=10 ->
-		%% 	(Below is N+1,
-		%% 	RowBelow is Solution[Below,1..10],
-		%% 	check_below(Row,RowBelow)
-		%% 	)
-		%% 	;
-		%% 	true
-	.
+    	check_row_touching(Row)
+    ).
+
+
+
+check_above(Row,N,Solution):-
+		(N>1 ->
+			Above is N-1,
+			RowAbove is Solution[Above,1..10],
+			get_element(Row,N,Elem),
+			Left is N-1,
+			Right is N+1,
+			get_element(RowAbove,Left,LeftElem),
+			get_element(RowAbove,Right,RightElem),
+			check_diagonal(LeftElem,Elem),
+			check_diagonal(RightElem,Elem)
+		;
+		true
+		).
+
+check_col_touching(List):-
+	for(N,2,10),
+	param(List)
+	do
+		%% write('pos'),write(N),nl,
+		get_element(List,N,Elem),
+		Above is N-1,
+		get_element(List,Above,AboveEl),
+		%% check_element(Elem,LeftElem,RightElem).
+		check_aboveEl(AboveEl,Elem).
+
+check_row_touching(List):-
+	for(N,2,10),
+	param(List)
+	do
+		%% write('pos'),write(N),nl,
+		get_element(List,N,Elem),
+		Left is N-1,
+		get_element(List,Left,LeftElem),
+		%% check_element(Elem,LeftElem,RightElem).
+		checkLeft(LeftElem,Elem).
 
 check_above(Row,Above):-
 	for(N,1,10),
 	param(Row),param(Above)
 	do
-		write(N),nl,
 		get_element(Row,N,Elem),
-		get_element(Above,N,AboveEl),
 		Left is N-1,
 		Right is N+1,
 		get_element(Above,Left,LeftElem),
 		get_element(Above,Right,RightElem),
 		check_diagonal(LeftElem,Elem),
-		check_diagonal(RightElem,Elem), 
-		check_straight_above(AboveEl,Elem).
+		check_diagonal(RightElem,Elem).
 
 
 check_straight_above(Above,Elem):-
-	write('straight'),nl,
-	write(Above),nl,write(Elem),nl,
 	#=(Elem,0,ElemZero),
 	#=(Above,0,AboveZero),
 	#\=(Above,4,AboveNotFour),
@@ -118,103 +150,156 @@ check_straight_above(Above,Elem):-
 
 
 check_diagonal(E,Other) :-
-	write('check_diagonal'),nl,
 	#\=(E,0,ENotZero),
 	#\=(Other,0,ONotZero),
 	#=(E,0,EZero),
 	#=(Other,0,OZero),
-	and(ENotZero,OZero,B1),
-	and(EZero,ONotZero,B2),
-	and(EZero,OZero,BothZero),
-	#\=(B1,B2,OneOfBoth),
-	sumOfList([BothZero,OneOfBoth],1).
+	and(ENotZero,ONotZero,0).
+	%% and(ENotZero,OZero,B1),
+	%% and(EZero,ONotZero,B2),
+	%% and(EZero,OZero,BothZero),
+	%% #\=(B1,B2,OneOfBoth),
+	%% sumOfList([BothZero,OneOfBoth],1).
 
-check_row_touching(List):-
-	for(N,2,9),
-	param(List)
-	do
-		get_element(List,N,Elem),
-		Left is N-1,
-		Right is N+1,
-		get_element(List,Left,LeftElem),
-		get_element(List,Right,RightElem),
-		checkLeft(Elem,LeftElem),
-		checkRight(Elem,RightElem).
 
 
 %% Checks whether or not the elements are compatible. The given LeftElement is located on
 %% the left of Element
-checkLeft(Element,LeftElement):-
-	#>(LeftElement,2,B1),
-	#=(Element,0,B2),
-	and(B1,B2,ElementIsWater),
+checkLeft(Left,Right):- % Left element is water, right element is not a right piece
+	#=(Left,0,1),
+	#\=(Right,3,1).
 
-	#<(LeftElement,3,B3),
-	#\=(LeftElement,0,B4),
-	and(B3,B4,ElisLorM),
-	#=(Elem,3,El3),
-	#=(Elem,2,El2),
-	or(El3,El2,ElemMorR),
-	and(ElemMorR,ElisLorM,ElementIsRightOrMid),
+checkLeft(Left,Right):- % Left element is a L piece, right element is middle or right
+	#=(Left,1,1),
+	#=(Right,2,B1),
+	#=(Right,3,B2),
+	or(B1,B2,1).
 
-	#=(LeftElement,0,LeftWater),
-	#\=(Elem,3,ElemNotR),
-	and(LeftWater,ElemNotR,ElementNotR),
-	sumOfList([ElementIsWater,ElementIsRightOrMid,ElementNotR],1).
+checkLeft(Left,Right):- % Left element is a M piece, right element is middle or right
+	#=(Left,2,1),
+	#=(Right,2,B1),
+	#=(Right,3,B2),
+	#=(Right,0,B3)
+	or(B1,B2,B12),
+	or(B12,B3,1).
+
+checkLeft(Left,Right):-
+	#\=(Left,0,1),
+	#\=(Left,1,1),
+	#\=(Left,2,1),
+	#=(Right,0,1).
+
+
+check_aboveEl(Top,Bottom):- % Left element is water, right element is not a right piece
+	#=(Top,0,1),
+	#\=(Bottom,5,1).
+
+check_aboveEl(Top,Bottom):- % Top element is a L piece, Bott element is middle or Botto
+	#=(Top,4,1),
+	#=(Bottom,2,B1),
+	#=(Bottom,5,B2),
+	or(B1,B2,1).
+
+check_aboveEl(Top,Bottom):- % Top element is a M piece, Bott element is middle or Botto
+	#=(Top,2,1),
+	#=(Bottom,2,B1),
+	#=(Bottom,5,B2),
+	#=(Bottom,0,B3)
+	or(B1,B2,B12),
+	or(B12,B3,1).
+
+check_aboveEl(Top,Bottom):-
+	#\=(Top,0,1),
+	#\=(Top,4,1),
+	#\=(Top,2,1),
+	#=(Bottom,0,1).
+
+
+
+
+	%% % Element on the left is a piece of a boat, which is not the middle or the left piece
+	%% % the Botto element should be water
+	%% #>(LeftElement,2,B1),
+	%% #=(Element,0,B2),
+	%% and(B1,B2,ElementIsWater),
+
+	%% % The element on the left is a left or a middle piec of the boat, the right element
+	%% % should be a right or middle piece.
+	%% #<(LeftElement,3,B3),
+	%% #\=(LeftElement,0,B4),
+	%% and(B3,B4,ElisLorM),
+	%% #=(Elem,3,El3),
+	%% #=(Elem,2,El2),
+	%% or(El3,El2,ElemMorR),
+	%% and(ElemMorR,ElisLorM,ElementIsRightOrMid),
+
+	%% % The left element is water, the right element can be everything but the right side of a boat.
+	%% #=(LeftElement,0,LeftWater),
+	%% #\=(Elem,3,ElemNotR),
+	%% and(LeftWater,ElemNotR,ElementNotR),
+
+	%% % Only one of three cases can be true.
+	%% sumOfList([ElementIsWater,ElementIsRightOrMid,ElementNotR],1).
 
 %% Checks whether or not the elements are compatible. The given RightElement is located on
 %% the right of Element
 checkRight(Element,RightElement):-
-	#>(RightElement,3,B1), 
-	#=(RightElement,1,B2), 
-	or(B1,B2,ElementShouldBeWater),
-	#=(Element,0,B3),
-	and(B3,ElementShouldBeWater,ElementIsWater),
+	%% #>(RightElement,3,B1), 
+	%% #=(RightElement,1,B2), 
+	%% or(B1,B2,ElementShouldBeWater),
+	%% #=(Element,0,B3),
+	%% and(B3,ElementShouldBeWater,ElementIsWater),
 
-	#<(RightElement,4,Smaller),
-	#>(RightElement,1,Larger),
-	and(Smaller,Larger,RightIsLeftOrMid),
-	#=(Elem,1,El1),
-	#=(Elem,2,El2),
-	or(El1,El2,ElemMorL),
-	and(RightIsLeftOrMid,ElemMorL,ElementIsLeftOrMid),
+	%% #<(RightElement,4,Smaller),
+	%% #>(RightElement,1,Larger),
+	%% and(Smaller,Larger,RightIsLeftOrMid),
+	%% #=(Elem,1,El1),
+	%% #=(Elem,2,El2),
+	%% or(El1,El2,ElemMorL),
+	%% and(RightIsLeftOrMid,ElemMorL,ElementIsLeftOrMid),
 
-	#=(RightElement,0,RightWater),
-	#\=(Elem,1,ElemNotL),
-	and(RightWater,ElemNotL,ElementNotL),
-	sumOfList([ElementIsWater,ElementIsLeftOrMid,ElementNotL],1).
-
+	%% #=(RightElement,0,RightWater),
+	%% #\=(Elem,1,ElemNotL),
+	%% and(RightWater,ElemNotL,ElementNotL),
+	%% sumOfList([ElementIsWater,ElementIsLeftOrMid,ElementNotL],1).
+	#=(RightElement,0,B1), % Left is water
+	#=(Element,0,El0),
+	and(B1,El0,Both0),
+	#=(Element,2,B2),
+	#=(Element,1,B3),
+	or(B3,B2,BT),
+	#\=(B1,BT,1).
 
 
 
 % Ensures that there are only N occurences of a boat of length 2
-check_length2(Solution, N):-
-	List is Solution[1..10,1..10],
-	createOneList(List,OneList),
-	count2(1,3,OneList,H),
-	transpose(List,Trans),
-	createOneList(Trans,OneList2),
-	count2(4,5,OneList2,V),
+check_length2(List,Trans, N):-
+	%% createDoubles(List,ListD),
+	%% createDoubles(Trans,TransD),
+	%% count([1,3],ListD,H),
+	%% count([4,5],TransD,V),	
+	count2(1,3,List,H),
+	count2(4,5,Trans,V),
 	sumOfList([H,V],N).
 
+
+
+createDoubles(List,Result):-createDoubles(List,[],Result).
+createDoubles([_],Result,Result).
+createDoubles([A,B|T],Acc,Result):-
+	append(Acc,[[A,B]],Acc1),
+	createDoubles([B|T],Acc1,Result).
+
 % Ensures that there are only N occurences of a boat of length 3
-check_length3(Solution, N):- 
-	List is Solution[1..10,1..10],
-	createOneList(List,OneList),
-	count3(1,2,3,OneList,H),
-	transpose(List,Trans),
-	createOneList(Trans,OneList2),
-	count3(4,2,5,OneList2,V),
+check_length3(List,Trans, N):- 
+	count3(1,2,3,List,H),
+	count3(4,2,5,Trans,V),
 	sumOfList([H,V],N).
 
 % Ensures that there are only N occurences of a boat of length 4
-check_length4(Solution, N):- 
-	List is Solution[1..10,1..10],
-	createOneList(List,OneList),
-	count4(1,2,2,3,OneList,H),
-	transpose(List,Trans),
-	createOneList(Trans,OneList2),
-	count4(4,2,2,5,OneList2,V),
+check_length4(List,Trans, N):- 
+	count4(1,2,2,3,List,H),
+	count4(4,2,2,5,Trans,V),
 	sumOfList([H,V],N).
 
 count_Horizontal2(Solution,H):-
@@ -224,10 +309,9 @@ count_Vertical2(Solution,N):-
 	count2(4,5,Solution,N).
 
  check_submarines(Solution):-
-    occurrences(6,Solution,4).
+    %% occurrences(6,Solution,4).
+    count2(6,_,Solution,4).
 	
- check_middlepieces(Solution):-
-     occurrences(2,Solution,4).
 
     
 check_columns([],[]).
@@ -289,6 +373,9 @@ createOneList([H|T],Acc,List):-
     append(Acc,H,R1),
     createOneList(T,R1,List).
 	
+count([_,_],[],0).
+count([A,B],[[C,D]|T],N):-count([A,B],T,N1),#=(A,C,B1),#=(B,D,B2),and(B1,B2,Tot),N#=N1+Tot.
+
 count2(_,_,[_],0).
 count2(A,B,[X,Y|T],N):- 
 	count2(A,B,[Y|T],N1), 
